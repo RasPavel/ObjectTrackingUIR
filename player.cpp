@@ -35,9 +35,10 @@ void Player::run()
             stop = true;
         }
         if (frame.channels()== 3){
+//            cv::resize(frame, frame, cv::Size(527, 329));
             cv::cvtColor(frame, RGBframe, CV_BGR2RGB);
             img = QImage((const unsigned char*)(RGBframe.data),
-                              RGBframe.cols,RGBframe.rows,QImage::Format_RGB888);
+                              RGBframe.cols,RGBframe.rows, RGBframe.step, QImage::Format_RGB888);
         }
         else
         {
