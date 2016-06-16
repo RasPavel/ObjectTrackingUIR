@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <player.h>
+#include "bgsubtractor.h"
+#include "meanshifttracker.h"
 
 namespace Ui {
 class MainWindow;
@@ -17,6 +19,7 @@ public:
     ~MainWindow();
 
 private slots:
+    void processFrame(cv::Mat frame);
     void updatePlayerUI(QImage img);
     void on_load_button_clicked();
 
@@ -25,6 +28,10 @@ private slots:
 private:
     Ui::MainWindow *ui;
     Player* myPlayer;
+    BgSubtractor* bgSubtractor;
+    MeanShiftTracker* msTracker;
+
+    cv::Mat mask;
 };
 
 #endif // MAINWINDOW_H

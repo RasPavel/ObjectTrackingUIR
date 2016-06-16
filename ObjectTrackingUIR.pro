@@ -18,9 +18,16 @@ LIBS += -L/usr/local/lib -lopencv_stitching -lopencv_superres -lopencv_videostab
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    player.cpp
+    player.cpp \
+    bgsubtractor.cpp \
+    meanshifttracker.cpp
 
 HEADERS  += mainwindow.h \
-    player.h
+    player.h \
+    bgsubtractor.h \
+    meanshifttracker.h
 
 FORMS    += mainwindow.ui
+
+DISTFILES += \
+    modelUML.qmodel

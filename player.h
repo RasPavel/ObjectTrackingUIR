@@ -33,6 +33,7 @@ public:
     void Stop();
     bool isStopped() const;
 signals:
+    void processedFrame(cv::Mat frame);
     void processedImage(const QImage &image);
 };
 

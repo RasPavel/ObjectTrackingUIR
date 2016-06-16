@@ -45,6 +45,9 @@ void Player::run()
             img = QImage((const unsigned char*)(frame.data),
                                  frame.cols,frame.rows,QImage::Format_Indexed8);
         }
+
+
+        emit processedFrame(frame);
         emit processedImage(img);
         this->msleep(delay);
     }
