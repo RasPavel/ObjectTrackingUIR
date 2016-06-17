@@ -21,8 +21,8 @@ public:
 private slots:
     void processFrame(cv::Mat frame);
     void updatePlayerUI(QImage img);
+    void initMeanshiftTracker(QRect rect);
     void on_load_button_clicked();
-
     void on_play_button_clicked();
 
 private:

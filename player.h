@@ -32,6 +32,7 @@ public:
     void Play();
     void Stop();
     bool isStopped() const;
+    Mat getCurrentFrame();
 signals:
     void processedFrame(cv::Mat frame);
     void processedImage(const QImage &image);

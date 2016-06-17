@@ -97,10 +97,30 @@
      <string/>
     </property>
    </widget>
+   <widget class="QLabel" name="label_bottom_down">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>470</y>
+      <width>551</width>
+      <height>369</height>
+     </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">Background-color: #000;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
    <zorder>layoutWidget</zorder>
    <zorder>layoutWidget</zorder>
    <zorder>label_down</zorder>
    <zorder>label_input</zorder>
+   <zorder>label_bottom_down</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">

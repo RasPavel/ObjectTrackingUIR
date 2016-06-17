@@ -16,57 +16,56 @@ MainWindow::MainWindow(QWidget *parent) :
     myPlayer = new Player();
     bgSubtractor = new BgSubtractor();
     msTracker = NULL;
-    QObject::connect(myPlayer, SIGNAL(processedImage(QImage)), this, SLOT(updatePlayerUI(QImage)));
+    connect(myPlayer, SIGNAL(processedImage(QImage)), this, SLOT(updatePlayerUI(QImage)));
     qRegisterMetaType< cv::Mat >("cv::Mat");
     connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), this, SLOT(processFrame(cv::Mat)));
     ui->setupUi(this);
+    connect(ui->label_input, SIGNAL(selected(QRect)), this, SLOT(initMeanshiftTracker(QRect)));
 }
 
-void MainWindow::on_load_button_clicked()
-{
-    QString filename = QFileDialog::getOpenFileName(this,
-                                          tr("Open Video"), ".",
-                                          tr("Video Files (*.avi *.mpg *.mp4)"));
-    if (!filename.isEmpty()){
-        if (!myPlayer->loadVideo(filename.toLatin1().data()))
-        {
-            QMessageBox msgBox;
-            msgBox.setText("The selected video could not be opened!");
-            msgBox.exec();
-        }
-    }
-}
 
 void MainWindow::processFrame(Mat frame)
 {
-    qDebug() << "mw process frame";
-    if (!msTracker) {
-        msTracker = new MeanShiftTracker(frame, cv::Rect(0,0,10,10));
+    Scalar color_blue( 0, 0, 255 );
+    Scalar color_red(255, 0 , 0);
+
+
+    if (msTracker) {
+        cv::Mat roi = msTracker->getRoi();
+        cv::Mat ms_mask_roi = msTracker->mask_roi;
+        cv::Mat bp = msTracker->getBackProjection();
+
+        cv::Mat botdown_mat = bp;
+
+        QImage botdown_img = QImage((uchar*) botdown_mat.data, botdown_mat.cols, botdown_mat.rows, botdown_mat.step, QImage::Format_Grayscale8);
+        QPixmap botdown_pix = QPixmap::fromImage(botdown_img);
+        ui->label_bottom_down->setPixmap(botdown_pix.scaled(ui->label_bottom_down->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+
+
+//        qDebug() << "mean shift is active";
+        msTracker->processFrame(frame);
+        backproj = msTracker->getBackProjection();
+
+        cv::Rect msBounRect = msTracker->getBoundingRect();
+//        cvtColor( backproj, backproj, COLOR_GRAY2RGB);
+//        rectangle(backproj, msBounRect, color_blue);
+
+
+        QImage backproj_img = QImage((uchar*) backproj.data, backproj.cols, backproj.rows, backproj.step, QImage::Format_Grayscale8);
+        QPixmap backproj_pix = QPixmap::fromImage(backproj_img);
+        ui->label_mog->setPixmap(backproj_pix.scaled(ui->label_mog->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+    } else {
+//        qDebug() << "mean shift is not active";
     }
 
     bgSubtractor->processFrame(frame);
-    msTracker->processFrame(frame);
 
     mask = *bgSubtractor->getMask();
     cv::Mat morph_mask= *bgSubtractor->getMorphMask();
-    backproj = msTracker->getBackProjection();
 
-    //    bool backprojMode = true;
-    //    if( backprojMode )
-    Scalar color_blue( 0, 0, 255 );
-    Scalar color_red(255, 0 , 0);
-    cv::Rect msBounRect = msTracker->getBoundingRect();
-    cvtColor( backproj, backproj, COLOR_GRAY2RGB);
-    rectangle(backproj, msBounRect, color_blue);
-    /*trackWindow = Rect(trackWindow.x - r, trackWindow.y - r,*/
-                                                                      //                          trackWindow.x + r, trackWindow.y + r) &
-                                                                      //                      Rect(0, 0, cols, rows);
-    //   ellipse( image, trackBox, Scalar(0,0,255), 3, LINE_AA );
 
-    QImage backproj_img = QImage((uchar*) backproj.data, backproj.cols, backproj.rows, backproj.step, QImage::Format_RGB888);
-    QPixmap backproj_pix = QPixmap::fromImage(backproj_img);
 
-    ui->label_mog->setPixmap(backproj_pix.scaled(ui->label_mog->size(), Qt::KeepAspectRatio, Qt::FastTransformation));
+
 
 
     QImage bg_img = QImage((uchar*) mask.data, mask.cols, mask.rows, mask.step, QImage::Format_Grayscale8);
@@ -103,7 +102,23 @@ void MainWindow::processFrame(Mat frame)
     QImage contour_img = QImage((uchar*) dst.data, dst.cols, dst.rows, dst.step, QImage::Format_RGB888);
     QPixmap contour_pix = QPixmap::fromImage(contour_img);
 
-    ui->label_down->setPixmap(contour_pix.scaled(ui->label_down->size(), Qt::KeepAspectRatio, Qt::FastTransformation));
+    ui->label_down->setPixmap(contour_pix.scaled(ui->label_down->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+}
+
+void MainWindow::initMeanshiftTracker(QRect rect)
+{
+    qDebug() << "INIT MSTracker";
+    cv::Mat curFrame = myPlayer->getCurrentFrame();
+
+    float xScale = (float) curFrame.cols / ui->label_input->width();
+    float yScale = (float) curFrame.rows / ui->label_input->height();
+
+    qDebug() << curFrame.cols << curFrame.rows;
+    qDebug() << ui->label_input->size();
+    qDebug() << xScale << yScale;
+
+    cv::Rect targetRect(rect.x() * xScale, rect.y() * yScale, rect.width() * xScale, rect.height() * yScale);
+    msTracker = new MeanShiftTracker(curFrame, targetRect);
 }
 
 void MainWindow::updatePlayerUI(QImage img)
@@ -111,12 +126,26 @@ void MainWindow::updatePlayerUI(QImage img)
     if (!img.isNull())
     {
         ui->label_input->setAlignment(Qt::AlignCenter);
-        ui->label_input->setPixmap(QPixmap::fromImage(img).scaled(ui->label_input->size(), Qt::KeepAspectRatio, Qt::FastTransformation));
+        ui->label_input->setPixmap(QPixmap::fromImage(img).scaled(ui->label_input->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
 //        QPixmap pix = QPixmap::fromImage(img);
 //        ui->label_input->setPixmap();
     }
 }
 
+void MainWindow::on_load_button_clicked()
+{
+    QString filename = QFileDialog::getOpenFileName(this,
+                                          tr("Open Video"), ".",
+                                          tr("Video Files (*.avi *.mpg *.mp4)"));
+    if (!filename.isEmpty()){
+        if (!myPlayer->loadVideo(filename.toLatin1().data()))
+        {
+            QMessageBox msgBox;
+            msgBox.setText("The selected video could not be opened!");
+            msgBox.exec();
+        }
+    }
+}
 
 void MainWindow::on_play_button_clicked()
 {

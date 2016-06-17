@@ -21,11 +21,12 @@ public:
     cv::Point getPosition();
     cv::Mat getBackProjection();
 //    void update_hist(cv::Mat roi);
-    cv::Mat mask;
+    cv::Mat getRoi();
+    cv::Mat mask, mask_roi, hue_roi;
 private:
     cv::Rect trackWindow;
-    cv::Mat roi_hist;
-    cv::Mat backproj, hue;
+    cv::Mat roi_hist, roi;
+    cv::Mat hsv_frame, backproj, hue_sat;
     int hsize = 16;
     float hranges[2] = {0,180};
     Scalar lowThresh = Scalar(0, 0, 0);
