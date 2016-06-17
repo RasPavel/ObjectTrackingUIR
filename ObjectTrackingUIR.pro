@@ -20,12 +20,14 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     player.cpp \
     bgsubtractor.cpp \
-    meanshifttracker.cpp
+    meanshifttracker.cpp \
+    clickablelabel.cpp
 
 HEADERS  += mainwindow.h \
     player.h \
     bgsubtractor.h \
-    meanshifttracker.h
+    meanshifttracker.h \
+    clickablelabel.h
 
 FORMS    += mainwindow.ui
 
