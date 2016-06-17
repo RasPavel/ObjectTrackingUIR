@@ -18,10 +18,12 @@ public:
     cv::Mat* getMask();
     cv::Rect getBoundingRect();
     cv::Point getPosition();
+    cv::Mat* getMorphMask();
     int getMixtureCount();
 private:
     cv::Ptr<cv::BackgroundSubtractorMOG2> bgSubtractor;
-    cv::Mat fgMask;
+    cv::Mat mask;
+    cv::Mat morph_mask;
 };
 
 #endif // BGSUBTRACTOR_H

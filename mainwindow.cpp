@@ -39,53 +39,70 @@ void MainWindow::on_load_button_clicked()
 
 void MainWindow::processFrame(Mat frame)
 {
+    qDebug() << "mw process frame";
     if (!msTracker) {
         msTracker = new MeanShiftTracker(frame, cv::Rect(0,0,10,10));
     }
+
     bgSubtractor->processFrame(frame);
+    msTracker->processFrame(frame);
+
     mask = *bgSubtractor->getMask();
+    cv::Mat morph_mask= *bgSubtractor->getMorphMask();
+    backproj = msTracker->getBackProjection();
+
+    //    bool backprojMode = true;
+    //    if( backprojMode )
+    Scalar color_blue( 0, 0, 255 );
+    Scalar color_red(255, 0 , 0);
+    cv::Rect msBounRect = msTracker->getBoundingRect();
+    cvtColor( backproj, backproj, COLOR_GRAY2RGB);
+    rectangle(backproj, msBounRect, color_blue);
+    /*trackWindow = Rect(trackWindow.x - r, trackWindow.y - r,*/
+                                                                      //                          trackWindow.x + r, trackWindow.y + r) &
+                                                                      //                      Rect(0, 0, cols, rows);
+    //   ellipse( image, trackBox, Scalar(0,0,255), 3, LINE_AA );
+
+    QImage backproj_img = QImage((uchar*) backproj.data, backproj.cols, backproj.rows, backproj.step, QImage::Format_RGB888);
+    QPixmap backproj_pix = QPixmap::fromImage(backproj_img);
+
+    ui->label_mog->setPixmap(backproj_pix.scaled(ui->label_mog->size(), Qt::KeepAspectRatio, Qt::FastTransformation));
+
+
     QImage bg_img = QImage((uchar*) mask.data, mask.cols, mask.rows, mask.step, QImage::Format_Grayscale8);
     QPixmap bg_pix = QPixmap::fromImage(bg_img);
 
     int N = bgSubtractor->getMixtureCount();
-    qDebug() << N << "mixtures";
-
-
-    //morph opening
-    int morph_size = 2;
-    Mat element = getStructuringElement( MORPH_RECT, Size( 2*morph_size + 1, 2*morph_size+1 ), Point( morph_size, morph_size ) );
-    Mat frame_morph;
-    morphologyEx(mask, frame_morph, cv::MORPH_OPEN, element);
+//    qDebug() << N << "mixtures";
 
 
 
-
-    int niters = 3;
     vector<vector<Point> > contours;
-    vector<Vec4i> hierarchy;
-    Mat temp;
-    Mat dst;
-    dilate(mask, temp, Mat(), Point(-1,-1), niters);
-    erode(temp, temp, Mat(), Point(-1,-1), niters*2);
-    dilate(temp, temp, Mat(), Point(-1,-1), niters);
+    vector<Vec4i> hierarchy;    
 
-    dst = Mat::zeros(frame.size(), CV_8UC3);
+    Mat dst = Mat::zeros(frame.size(), CV_8UC3);
 
 
-    Scalar color_blue( 0, 0, 255 );
-    Scalar color_red(255, 0 , 0);
+
+
+
+
+
+
+
+
+
     cv::Rect boundRect = bgSubtractor->getBoundingRect();
     cv::Point position = bgSubtractor->getPosition();
     rectangle( dst, boundRect.tl(), boundRect.br(), color_blue, 2, 8, 0 );
 
     ellipse(dst, position, cv::Size(3,3), 0, 0, 360, color_red, 8);
 
-    QImage morph_img = QImage((uchar*) frame_morph.data, frame_morph.cols, frame_morph.rows, frame_morph.step, QImage::Format_Grayscale8);
+    QImage morph_img = QImage((uchar*) morph_mask.data, morph_mask.cols, morph_mask.rows, morph_mask.step, QImage::Format_Grayscale8);
     QPixmap morph_pix = QPixmap::fromImage(morph_img);
     QImage contour_img = QImage((uchar*) dst.data, dst.cols, dst.rows, dst.step, QImage::Format_RGB888);
     QPixmap contour_pix = QPixmap::fromImage(contour_img);
 
-    ui->label_mog->setPixmap(bg_pix.scaled(ui->label_mog->size(), Qt::KeepAspectRatio, Qt::FastTransformation));
     ui->label_down->setPixmap(contour_pix.scaled(ui->label_down->size(), Qt::KeepAspectRatio, Qt::FastTransformation));
 }
 

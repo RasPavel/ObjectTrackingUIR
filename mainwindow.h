@@ -32,6 +32,7 @@ private:
     MeanShiftTracker* msTracker;
 
     cv::Mat mask;
+    cv::Mat backproj;
 };
 
 #endif // MAINWINDOW_H

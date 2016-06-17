@@ -17,9 +17,10 @@ MeanShiftTracker::MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect)
     normalize(roi_hist, roi_hist, 0, 255, NORM_MINMAX);
 
     termCrit = TermCriteria(TermCriteria::EPS | TermCriteria::COUNT, 10, 1);
+    trackWindow = roi_rect;
 }
 
-void MeanShiftTracker::processFrame(cv::Mat frame)
+void MeanShiftTracker::processFrame(const cv::Mat& frame)
 {
     cv::cvtColor(frame, frame, CV_RGB2HSV);
     inRange(frame, lowThresh, highThresh, mask);
@@ -29,7 +30,7 @@ void MeanShiftTracker::processFrame(cv::Mat frame)
 
     const float* phranges = hranges;
     calcBackProject(&hue, 1, 0, roi_hist, backproj, &phranges);
-    backproj &= mask;
+//    backproj &= mask;
 
 
 
@@ -46,7 +47,12 @@ void MeanShiftTracker::processFrame(cv::Mat frame)
 
 }
 
-cv::Mat* MeanShiftTracker::getBackProjection()
+const cv::Rect& MeanShiftTracker::getBoundingRect()
 {
-    return &backproj;
+    return trackWindow;
+}
+
+cv::Mat MeanShiftTracker::getBackProjection()
+{
+    return backproj;
 }

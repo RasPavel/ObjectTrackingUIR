@@ -10,21 +10,33 @@ BgSubtractor::BgSubtractor()
 }
 
 void BgSubtractor::processFrame(cv::Mat &frame) {
-    qDebug() << "begin";
-    if (fgMask.empty()) {
-        qDebug() << "empty";
-        fgMask= cv::Mat(frame.rows, frame.cols, frame.type());
+    if (mask.empty()) {
+        qDebug() << "bgSubtractor got an empty frame";
+        mask= cv::Mat(frame.rows, frame.cols, frame.type());
         qDebug() << frame.rows << " " << frame.cols << frame.type();
-        qDebug() << fgMask.rows << fgMask.cols << fgMask.type();
+        qDebug() << mask.rows << mask.cols << mask.type();
     }
-    bgSubtractor->apply(frame, fgMask);
-    qDebug() << fgMask.rows << fgMask.cols << fgMask.type();
+    bgSubtractor->apply(frame, mask);
 
-    qDebug() << "end";
+    int morph_size = 2;
+    cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size));
+    morphologyEx(mask, morph_mask, cv::MORPH_OPEN, element);
+
+//    int niters = 3;
+//    Mat temp;
+//    dilate(mask, temp, Mat(), Point(-1,-1), niters);
+//    erode(temp, temp, Mat(), Point(-1,-1), niters*2);
+//    dilate(temp, temp, Mat(), Point(-1,-1), niters);
+
 }
 
 cv::Mat* BgSubtractor::getMask() {
-    return &fgMask;
+
+    return &mask;
+}
+
+cv::Mat* BgSubtractor::getMorphMask() {
+    return & morph_mask;
 }
 
 cv::Rect BgSubtractor::getBoundingRect() {
@@ -43,7 +55,7 @@ cv::Rect BgSubtractor::getBoundingRect() {
      vector<Point> contour_poly;
      Rect boundRect;
 
-     findContours( fgMask, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_SIMPLE );
+     findContours( mask, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_SIMPLE );
 
      if( contours.size() == 0 )
          return Rect();
