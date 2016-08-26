@@ -10,7 +10,7 @@ BgSubtractor::BgSubtractor()
     //http://docs.opencv.org/master/de/de1/group__video__motion.html#ga2beb2dee7a073809ccec60f145b6b29c&gsc.tab=0
 }
 
-void BgSubtractor::processFrame(cv::Mat &frame) {
+void BgSubtractor::processFrame(const cv::Mat &frame) {
     if (mask.empty()) {
         qDebug() << "bgSubtractor got an empty frame";
         mask= cv::Mat(frame.rows, frame.cols, frame.type());

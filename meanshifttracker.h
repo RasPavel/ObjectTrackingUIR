@@ -1,6 +1,8 @@
 #ifndef MEANSHIFTTRACKER_H
 #define MEANSHIFTTRACKER_H
 
+#include "objecttracker.h"
+
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/videoio.hpp"
@@ -12,14 +14,14 @@
 
 using namespace cv;
 
-class MeanShiftTracker
+class MeanShiftTracker: public ObjectTracker
 {
 public:
     MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect);
     void processFrame(const cv::Mat& frame);
     void processFrame(const cv::Mat& frame, cv::Mat bg_mask);
 
-    const cv::Rect& getBoundingRect();
+    cv::Rect getBoundingRect();
     cv::Mat getBackProjection();
 
 

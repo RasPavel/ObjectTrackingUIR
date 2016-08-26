@@ -123,7 +123,7 @@ void MeanShiftTracker::processFrame(const cv::Mat& frame, cv::Mat bg_mask)
 
 }
 
-const cv::Rect& MeanShiftTracker::getBoundingRect()
+cv::Rect MeanShiftTracker::getBoundingRect()
 {
     return trackWindow;
 }
@@ -136,4 +136,10 @@ cv::Mat MeanShiftTracker::getBackProjection()
 cv::Mat MeanShiftTracker::getRoi()
 {
     return roi;
+}
+
+cv::Point MeanShiftTracker::getPosition()
+{
+    cv::Rect boundRect = getBoundingRect();
+    return boundRect.br()/2 + boundRect.tl()/2;
 }
