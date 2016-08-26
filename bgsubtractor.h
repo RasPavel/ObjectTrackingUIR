@@ -20,6 +20,7 @@ public:
     cv::Point getPosition();
     cv::Mat* getMorphMask();
     int getMixtureCount();
+    cv::Mat mask_open, mask_close;
 private:
     cv::Ptr<cv::BackgroundSubtractorMOG2> bgSubtractor;
     cv::Mat mask;

@@ -2,7 +2,8 @@
 
 BgSubtractor::BgSubtractor()
 {
-    bgSubtractor = cv::createBackgroundSubtractorMOG2(1000, 16, false);
+//    bgSubtractor = cv::createBackgroundSubtractorMOG2(1000, 16, false);
+    bgSubtractor = cv::createBackgroundSubtractorMOG2(1000,16,false);
 //    history	Length of the history.
 //    varThreshold	Threshold on the squared Mahalanobis distance between the pixel and the model to decide whether a pixel is well described by the background model. This parameter does not affect the background update.
 //    detectShadows	If true, the algorithm will detect shadows and mark them. It decreases the speed a bit, so if you do not need this feature, set the parameter to false.
@@ -18,9 +19,13 @@ void BgSubtractor::processFrame(cv::Mat &frame) {
     }
     bgSubtractor->apply(frame, mask);
 
-    int morph_size = 2;
+    int morph_size = 1;
+    int close_size = 2;
     cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size));
+    cv::Mat close_element = getStructuringElement(cv::MORPH_RECT, cv::Size( 2*close_size + 1, 2*close_size+1 ), cv::Point( close_size, close_size));
     morphologyEx(mask, morph_mask, cv::MORPH_OPEN, element);
+    morphologyEx(mask, mask_open, cv::MORPH_OPEN, element);
+    morphologyEx(mask_open, mask_close, cv::MORPH_CLOSE, close_element);
 
 //    int niters = 3;
 //    Mat temp;

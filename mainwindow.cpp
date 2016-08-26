@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <vector>
+#include <QTime>
 using namespace std;
 
 Q_DECLARE_METATYPE(cv::Mat)
@@ -26,50 +27,70 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::processFrame(Mat frame)
 {
+    QTime time = QTime::currentTime();
+
+    qDebug() << time.msec();
     Scalar color_blue( 0, 0, 255 );
     Scalar color_red(255, 0 , 0);
+    bgSubtractor->processFrame(frame);
 
+    cv::Mat morph_mask= *bgSubtractor->getMorphMask();
+    cv::Mat morph_open = bgSubtractor->mask_open;
+    cv::Mat morph_close = bgSubtractor->mask_close;
 
+    mask = *bgSubtractor->getMask();
+
+    usingAlgCombination = true;
     if (msTracker) {
+
+
+        if (usingAlgCombination) {
+            msTracker->processFrame(frame, mask);
+        } else {
+            msTracker->processFrame(frame);
+        }
+
         cv::Mat roi = msTracker->getRoi();
         cv::Mat ms_mask_roi = msTracker->mask_roi;
-        cv::Mat bp = msTracker->getBackProjection();
+        cv::Mat backproj = msTracker->getBackProjection();
 
-        cv::Mat botdown_mat = bp;
+        cv::Mat topright_mat = backproj;
+        cv::Mat bottomleft_mat = morph_close;
+        cv::Mat bottomright_mat = msTracker->heatmap;
 
-        QImage botdown_img = QImage((uchar*) botdown_mat.data, botdown_mat.cols, botdown_mat.rows, botdown_mat.step, QImage::Format_Grayscale8);
-        QPixmap botdown_pix = QPixmap::fromImage(botdown_img);
-        ui->label_bottom_down->setPixmap(botdown_pix.scaled(ui->label_bottom_down->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+        QImage bottomright_img = QImage((uchar*) bottomright_mat.data, bottomright_mat.cols, bottomright_mat.rows, bottomright_mat.step, QImage::Format_Grayscale8);
+        QPixmap bottomright_pix = QPixmap::fromImage(bottomright_img);
+//        ui->label_bottomright->setPixmap(bottomright_pix.scaled(ui->label_bottomright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
 
 
-//        qDebug() << "mean shift is active";
-        msTracker->processFrame(frame);
-        backproj = msTracker->getBackProjection();
 
-        cv::Rect msBounRect = msTracker->getBoundingRect();
+
+//        cv::Rect msBoundRect = msTracker->getBoundingRect();
 //        cvtColor( backproj, backproj, COLOR_GRAY2RGB);
-//        rectangle(backproj, msBounRect, color_blue);
-
+//        rectangle(backproj, msBoundRect, color_blue);
+//        QImage backproj_img = QImage((uchar*) backproj.data, backproj.cols, backproj.rows, backproj.step, QImage::Format_RGB888);
 
         QImage backproj_img = QImage((uchar*) backproj.data, backproj.cols, backproj.rows, backproj.step, QImage::Format_Grayscale8);
         QPixmap backproj_pix = QPixmap::fromImage(backproj_img);
-        ui->label_mog->setPixmap(backproj_pix.scaled(ui->label_mog->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
-    } else {
-//        qDebug() << "mean shift is not active";
+        ui->label_topright->setPixmap(backproj_pix.scaled(ui->label_topright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
     }
 
-    bgSubtractor->processFrame(frame);
-
-    mask = *bgSubtractor->getMask();
-    cv::Mat morph_mask= *bgSubtractor->getMorphMask();
 
 
 
 
-
-
-    QImage bg_img = QImage((uchar*) mask.data, mask.cols, mask.rows, mask.step, QImage::Format_Grayscale8);
+    QImage bg_img = QImage((uchar*) morph_close.data, morph_close.cols, morph_close.rows, morph_close.step, QImage::Format_Grayscale8);
     QPixmap bg_pix = QPixmap::fromImage(bg_img);
+
+    QImage open_img = QImage((uchar*) morph_open.data, morph_open.cols, morph_open.rows, morph_open.step, QImage::Format_Grayscale8);
+    QPixmap open_pix = QPixmap::fromImage(open_img);
+
+    QImage close_img = QImage((uchar*) morph_close.data, morph_close.cols, morph_close.rows, morph_close.step, QImage::Format_Grayscale8);
+    QPixmap close_pix = QPixmap::fromImage(close_img);
+
+//    ui->label_bottomleft->setPixmap(bg_pix.scaled(ui->label_bottomleft->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+//    ui->label_bottomright->setPixmap(open_pix.scaled(ui->label_bottomright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+//    ui->label_topright->setPixmap(close_pix.scaled(ui->label_topright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
 
     int N = bgSubtractor->getMixtureCount();
 //    qDebug() << N << "mixtures";
@@ -102,7 +123,7 @@ void MainWindow::processFrame(Mat frame)
     QImage contour_img = QImage((uchar*) dst.data, dst.cols, dst.rows, dst.step, QImage::Format_RGB888);
     QPixmap contour_pix = QPixmap::fromImage(contour_img);
 
-    ui->label_down->setPixmap(contour_pix.scaled(ui->label_down->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+//    ui->label_bottomright->setPixmap(contour_pix.scaled(ui->label_bottomright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
 }
 
 void MainWindow::initMeanshiftTracker(QRect rect)

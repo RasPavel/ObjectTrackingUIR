@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1500</width>
-    <height>1000</height>
+    <width>1134</width>
+    <height>806</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,7 +64,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_mog">
+      <widget class="QLabel" name="label_topright">
        <property name="autoFillBackground">
         <bool>false</bool>
        </property>
@@ -78,56 +78,115 @@
      </item>
     </layout>
    </widget>
-   <widget class="QLabel" name="label_down">
+   <widget class="QTextBrowser" name="textBrowser">
     <property name="geometry">
      <rect>
-      <x>590</x>
-      <y>450</y>
+      <x>25</x>
+      <y>541</y>
       <width>551</width>
-      <height>369</height>
+      <height>201</height>
      </rect>
     </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">Background-color: #000;</string>
-    </property>
-    <property name="text">
-     <string/>
+    <property name="html">
+     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Video &amp;quot;generated11_24.avi&amp;quot; has been loaded. size = (500,500)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_bottom_down">
+   <widget class="QWidget" name="verticalLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>470</y>
-      <width>551</width>
-      <height>369</height>
+      <x>790</x>
+      <y>550</y>
+      <width>81</width>
+      <height>181</height>
      </rect>
     </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>alpha</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>hbins</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>sbins</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>vbins</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>history</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="verticalLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>550</y>
+      <width>160</width>
+      <height>181</height>
+     </rect>
     </property>
-    <property name="styleSheet">
-     <string notr="true">Background-color: #000;</string>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox"/>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_4"/>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_5"/>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_3"/>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+       <property name="maximum">
+        <double>100000.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
    <zorder>layoutWidget</zorder>
    <zorder>layoutWidget</zorder>
-   <zorder>label_down</zorder>
-   <zorder>label_input</zorder>
-   <zorder>label_bottom_down</zorder>
+   <zorder>textBrowser</zorder>
+   <zorder>verticalLayoutWidget</zorder>
+   <zorder>verticalLayoutWidget_2</zorder>
+   <zorder>doubleSpinBox</zorder>
+   <zorder>doubleSpinBox_5</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1500</width>
+     <width>1134</width>
      <height>25</height>
     </rect>
    </property>

@@ -31,6 +31,7 @@ private:
     BgSubtractor* bgSubtractor;
     MeanShiftTracker* msTracker;
 
+    bool usingAlgCombination;
     cv::Mat mask;
     cv::Mat backproj;
 };

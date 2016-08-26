@@ -16,17 +16,23 @@ class MeanShiftTracker
 {
 public:
     MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect);
-    void processFrame(const cv::Mat&);
+    void processFrame(const cv::Mat& frame);
+    void processFrame(const cv::Mat& frame, cv::Mat bg_mask);
+
     const cv::Rect& getBoundingRect();
-    cv::Point getPosition();
     cv::Mat getBackProjection();
-//    void update_hist(cv::Mat roi);
+
+
+    cv::Point getPosition();
     cv::Mat getRoi();
-    cv::Mat mask, mask_roi, hue_roi;
+
+    cv::Mat mask, mask_roi, hue_roi, roi_hist2;
+    cv::Mat heatmap;
 private:
     cv::Rect trackWindow;
     cv::Mat roi_hist, roi;
     cv::Mat hsv_frame, backproj, hue_sat;
+    double alpha = 0.5;
     int hsize = 16;
     float hranges[2] = {0,180};
     Scalar lowThresh = Scalar(0, 0, 0);
