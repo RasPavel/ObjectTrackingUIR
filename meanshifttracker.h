@@ -27,13 +27,14 @@ public:
 
     cv::Point getPosition();
     cv::Mat getRoi();
+    cv::Mat getHeatmap();
 
     cv::Mat mask, mask_roi, hue_roi, roi_hist2;
-    cv::Mat heatmap;
 private:
     cv::Rect trackWindow;
     cv::Mat roi_hist, roi;
     cv::Mat hsv_frame, backproj, hue_sat;
+    cv::Mat heatmap;
     double alpha = 0.5;
     int hsize = 16;
     float hranges[2] = {0,180};

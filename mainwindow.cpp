@@ -13,13 +13,17 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-
     myPlayer = new Player();
     bgSubtractor = new BgSubtractor();
     msTracker = NULL;
+    initialized = false;
+
+
+
     connect(myPlayer, SIGNAL(processedImage(QImage)), this, SLOT(updatePlayerUI(QImage)));
     qRegisterMetaType< cv::Mat >("cv::Mat");
     connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), this, SLOT(processFrame(cv::Mat)));
+
     ui->setupUi(this);
     connect(ui->label_input, SIGNAL(selected(QRect)), this, SLOT(initMeanshiftTracker(QRect)));
 }
@@ -32,7 +36,14 @@ void MainWindow::processFrame(Mat frame)
     qDebug() << time.msec();
     Scalar color_blue( 0, 0, 255 );
     Scalar color_red(255, 0 , 0);
+    Scalar color_yellow(0, 255, 255);
     bgSubtractor->processFrame(frame);
+
+    if (!initialized) {
+        track = cv::Mat::zeros(frame.size(), frame.type());
+
+        initialized = true;
+    }
 
     cv::Mat morph_mask= *bgSubtractor->getMorphMask();
     cv::Mat morph_open = bgSubtractor->mask_open;
@@ -53,27 +64,32 @@ void MainWindow::processFrame(Mat frame)
         cv::Mat roi = msTracker->getRoi();
         cv::Mat ms_mask_roi = msTracker->mask_roi;
         cv::Mat backproj = msTracker->getBackProjection();
+        cv::Mat heatmap = msTracker->getHeatmap();
+
+
+
+        //draw track
+        circle(track, msTracker->getPosition(), 1, color_yellow);
+
+        cv::Rect msBoundRect = msTracker->getBoundingRect();
+        cvtColor( backproj, backproj, COLOR_GRAY2RGB);
+        rectangle(backproj, msBoundRect, color_blue);
 
         cv::Mat topright_mat = backproj;
         cv::Mat bottomleft_mat = morph_close;
-        cv::Mat bottomright_mat = msTracker->heatmap;
+        cv::Mat bottomright_mat = heatmap;
 
-        QImage bottomright_img = QImage((uchar*) bottomright_mat.data, bottomright_mat.cols, bottomright_mat.rows, bottomright_mat.step, QImage::Format_Grayscale8);
-        QPixmap bottomright_pix = QPixmap::fromImage(bottomright_img);
-//        ui->label_bottomright->setPixmap(bottomright_pix.scaled(ui->label_bottomright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+        if (ui->track_checkbox->isChecked()) {
+            addWeighted(backproj, 0.5, track, 0.5, 0, topright_mat);
+        }
 
-
-
-
-//        cv::Rect msBoundRect = msTracker->getBoundingRect();
-//        cvtColor( backproj, backproj, COLOR_GRAY2RGB);
-//        rectangle(backproj, msBoundRect, color_blue);
-//        QImage backproj_img = QImage((uchar*) backproj.data, backproj.cols, backproj.rows, backproj.step, QImage::Format_RGB888);
-
-        QImage backproj_img = QImage((uchar*) backproj.data, backproj.cols, backproj.rows, backproj.step, QImage::Format_Grayscale8);
-        QPixmap backproj_pix = QPixmap::fromImage(backproj_img);
-        ui->label_topright->setPixmap(backproj_pix.scaled(ui->label_topright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+        QImage topright_img = QImage((uchar*) topright_mat.data, topright_mat.cols, topright_mat.rows, topright_mat.step, QImage::Format_RGB888);
+        QPixmap topright_pix = QPixmap::fromImage(topright_img);
+        ui->label_topright->setPixmap(topright_pix.scaled(ui->label_topright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
     }
+
+//    cv::Point final_position = msTracker->getPosition();
+//    circle(track, final_position, 1, color_red);
 
 
 
@@ -88,27 +104,11 @@ void MainWindow::processFrame(Mat frame)
     QImage close_img = QImage((uchar*) morph_close.data, morph_close.cols, morph_close.rows, morph_close.step, QImage::Format_Grayscale8);
     QPixmap close_pix = QPixmap::fromImage(close_img);
 
-//    ui->label_bottomleft->setPixmap(bg_pix.scaled(ui->label_bottomleft->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
-//    ui->label_bottomright->setPixmap(open_pix.scaled(ui->label_bottomright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
-//    ui->label_topright->setPixmap(close_pix.scaled(ui->label_topright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
-
     int N = bgSubtractor->getMixtureCount();
 //    qDebug() << N << "mixtures";
 
 
-
-    vector<vector<Point> > contours;
-    vector<Vec4i> hierarchy;    
-
     Mat dst = Mat::zeros(frame.size(), CV_8UC3);
-
-
-
-
-
-
-
-
 
 
 

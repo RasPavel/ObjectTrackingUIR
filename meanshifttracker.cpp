@@ -123,6 +123,11 @@ void MeanShiftTracker::processFrame(const cv::Mat& frame, cv::Mat bg_mask)
 
 }
 
+cv::Mat MeanShiftTracker::getHeatmap()
+{
+    return heatmap;
+}
+
 cv::Rect MeanShiftTracker::getBoundingRect()
 {
     return trackWindow;

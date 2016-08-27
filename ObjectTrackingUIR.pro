@@ -26,10 +26,10 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     player.h \
-    bgsubtractor.h \
     meanshifttracker.h \
     clickablelabel.h \
-    objecttracker.h
+    objecttracker.h \
+    bgsubtractor.h
 
 FORMS    += mainwindow.ui
 
