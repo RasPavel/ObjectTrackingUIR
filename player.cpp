@@ -34,6 +34,8 @@ void Player::run()
         if (!capture.read(frame))
         {
             stop = true;
+            qDebug() << "read empty frame";
+            break;
         }
         if (frame.channels()== 3){
             cv::cvtColor(frame, RGBframe, CV_BGR2RGB);

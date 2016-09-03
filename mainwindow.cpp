@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType< cv::Mat >("cv::Mat");
     connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), this, SLOT(processFrame(cv::Mat)));
 
+
     ui->setupUi(this);
     connect(ui->label_input, SIGNAL(selected(QRect)), this, SLOT(initMeanshiftTracker(QRect)));
 }
@@ -76,6 +77,7 @@ void MainWindow::processFrame(Mat frame)
         rectangle(backproj, msBoundRect, color_blue);
 
         cv::Mat topright_mat = backproj;
+
         cv::Mat bottomleft_mat = morph_close;
         cv::Mat bottomright_mat = heatmap;
 
@@ -104,7 +106,7 @@ void MainWindow::processFrame(Mat frame)
     QImage close_img = QImage((uchar*) morph_close.data, morph_close.cols, morph_close.rows, morph_close.step, QImage::Format_Grayscale8);
     QPixmap close_pix = QPixmap::fromImage(close_img);
 
-    int N = bgSubtractor->getMixtureCount();
+//    int N = bgSubtractor->getMixtureCount();
 //    qDebug() << N << "mixtures";
 
 
@@ -172,6 +174,7 @@ void MainWindow::on_play_button_clicked()
 {
     if (myPlayer->isStopped())
     {
+        qDebug() << "player is stopped. now PLAY!";
         myPlayer->Play();
         ui->play_button->setText(tr("Stop"));
     }else
@@ -181,8 +184,18 @@ void MainWindow::on_play_button_clicked()
     }
 }
 
+
 MainWindow::~MainWindow()
 {
     delete myPlayer;
     delete ui;
+}
+
+
+void MainWindow::on_bgs_params_clicked()
+{
+    params_ui = new ParamsForm();
+    params_ui->setBgSubtractor(bgSubtractor);
+    connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), params_ui, SLOT(updateFrames(cv::Mat)));
+    params_ui->show();
 }

@@ -4,6 +4,8 @@ BgSubtractor::BgSubtractor()
 {
 //    bgSubtractor = cv::createBackgroundSubtractorMOG2(1000, 16, false);
     bgSubtractor = cv::createBackgroundSubtractorMOG2(1000,16,false);
+    openElementSize = 1;
+    closeElementSize = 2;
 //    history	Length of the history.
 //    varThreshold	Threshold on the squared Mahalanobis distance between the pixel and the model to decide whether a pixel is well described by the background model. This parameter does not affect the background update.
 //    detectShadows	If true, the algorithm will detect shadows and mark them. It decreases the speed a bit, so if you do not need this feature, set the parameter to false.
@@ -19,20 +21,11 @@ void BgSubtractor::processFrame(const cv::Mat &frame) {
     }
     bgSubtractor->apply(frame, mask);
 
-    int morph_size = 1;
-    int close_size = 2;
-    cv::Mat element = getStructuringElement(cv::MORPH_RECT, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size));
-    cv::Mat close_element = getStructuringElement(cv::MORPH_RECT, cv::Size( 2*close_size + 1, 2*close_size+1 ), cv::Point( close_size, close_size));
-    morphologyEx(mask, morph_mask, cv::MORPH_OPEN, element);
-    morphologyEx(mask, mask_open, cv::MORPH_OPEN, element);
+    cv::Mat open_element = getStructuringElement(cv::MORPH_RECT, cv::Size( 2*openElementSize + 1, 2*openElementSize+1 ), cv::Point( openElementSize, openElementSize));
+    cv::Mat close_element = getStructuringElement(cv::MORPH_RECT, cv::Size( 2*closeElementSize + 1, 2*closeElementSize+1 ), cv::Point( closeElementSize, closeElementSize));
+//    morphologyEx(mask, morph_mask, cv::MORPH_OPEN, element);
+    morphologyEx(mask, mask_open, cv::MORPH_OPEN, open_element);
     morphologyEx(mask_open, mask_close, cv::MORPH_CLOSE, close_element);
-
-//    int niters = 3;
-//    Mat temp;
-//    dilate(mask, temp, Mat(), Point(-1,-1), niters);
-//    erode(temp, temp, Mat(), Point(-1,-1), niters*2);
-//    dilate(temp, temp, Mat(), Point(-1,-1), niters);
-
 }
 
 cv::Mat* BgSubtractor::getMask() {
@@ -41,7 +34,7 @@ cv::Mat* BgSubtractor::getMask() {
 }
 
 cv::Mat* BgSubtractor::getMorphMask() {
-    return & morph_mask;
+    return &morph_mask;
 }
 
 cv::Rect BgSubtractor::getBoundingRect() {
@@ -60,7 +53,9 @@ cv::Rect BgSubtractor::getBoundingRect() {
      vector<Point> contour_poly;
      Rect boundRect;
 
-     findContours( mask, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_SIMPLE );
+     cv::Mat mask_copy;
+     mask.copyTo(mask_copy);
+     findContours( mask_copy, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_SIMPLE );
 
      if( contours.size() == 0 )
          return Rect();
@@ -81,18 +76,6 @@ cv::Rect BgSubtractor::getBoundingRect() {
      approxPolyDP( Mat(contours[largestComp]), contour_poly, 3, true );
      boundRect = boundingRect( Mat(contour_poly) );
 
-
-
-     /// Draw polygonal contour + bonding rects + circles
-     /*Mat drawing = Mat::zeros( threshold_output.size(), CV_8UC3 );
-     for( int i = 0; i< contours.size(); i++ )
-        {
-          Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-          drawContours( drawing, contours_poly, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
-          rectangle( drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );
-        }*/
-
-
      return  boundRect;
 
 }
@@ -104,5 +87,21 @@ cv::Point BgSubtractor::getPosition() {
 
 int BgSubtractor::getMixtureCount() {
     return bgSubtractor->getNMixtures();
+}
+
+void BgSubtractor::setHistory(int h) {
+    bgSubtractor->setHistory(h);
+}
+
+void BgSubtractor::setVarThreshold(int vt) {
+    bgSubtractor->setVarThreshold(vt);
+}
+
+void BgSubtractor::setOpenElementSize(int s) {
+    openElementSize = s;
+}
+
+void BgSubtractor::setCloseElementSize(int s) {
+    closeElementSize = s;
 }
 

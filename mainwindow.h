@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <player.h>
+#include "paramsform.h"
 #include "bgsubtractor.h"
 #include "meanshifttracker.h"
 
@@ -25,8 +26,13 @@ private slots:
     void on_load_button_clicked();
     void on_play_button_clicked();
 
+
+    void on_bgs_params_clicked();
+
 private:
     Ui::MainWindow *ui;
+
+    ParamsForm *params_ui;
     Player* myPlayer;
     BgSubtractor* bgSubtractor;
     MeanShiftTracker* msTracker;
