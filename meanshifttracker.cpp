@@ -6,7 +6,6 @@ MeanShiftTracker::MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect)
     roi = cv::Mat(frame, roi_rect).clone();
     cv::cvtColor(roi, hsv_roi, CV_RGB2HSV);
 
-    int hbins = 12, sbins = 10, vbins = 10;
     int histSize[] = {hbins, sbins, vbins};
 
     float hranges[] = { 0, 180 };
@@ -21,8 +20,8 @@ MeanShiftTracker::MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect)
 //    const float* phranges = hranges;
 //    calcHist(&hue_roi, 1, 0, mask_roi, roi_hist, 1, &hsize, &phranges);
 
-    calcHist( &hsv_roi, 1, channels, mask_roi, roi_hist, 3, histSize, ranges, true);
     inRange(hsv_roi, lowThresh, highThresh, mask_roi);
+    calcHist( &hsv_roi, 1, channels, mask_roi, roi_hist, 3, histSize, ranges, true);
 
 
 
@@ -121,6 +120,44 @@ void MeanShiftTracker::processFrame(const cv::Mat& frame, cv::Mat bg_mask)
 //                      Rect(0, 0, cols, rows);
 //   }
 
+}
+
+void MeanShiftTracker::updateHist(cv::Mat roi)
+{
+    cv::Mat hsv_roi;
+    cv::cvtColor(roi, hsv_roi, CV_RGB2HSV);
+
+    int histSize[] = {hbins, sbins, vbins};
+
+    float hranges[] = { 0, 180 };
+    float sranges[] = { 0, 256 };
+    float vranges[] = { 0, 256 };
+    const float* ranges[] = { hranges, sranges, vranges};
+    int channels[] = {0, 1, 2};
+
+    inRange(hsv_roi, lowThresh, highThresh, mask_roi);
+    calcHist(&hsv_roi, 1, channels, mask_roi, roi_hist, 3, histSize, ranges, true);
+}
+
+void MeanShiftTracker::setHbins(int h) {
+    hbins = h;
+    updateHist(roi);
+}
+
+
+void MeanShiftTracker::setSbins(int s) {
+    sbins = s;
+    updateHist(roi);
+}
+
+
+void MeanShiftTracker::setVbins(int v) {
+    vbins = v;
+    updateHist(roi);
+}
+
+void MeanShiftTracker::setAlpha(double a) {
+    alpha = a;
 }
 
 cv::Mat MeanShiftTracker::getHeatmap()

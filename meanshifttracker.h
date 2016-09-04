@@ -29,14 +29,22 @@ public:
     cv::Mat getRoi();
     cv::Mat getHeatmap();
 
+    void setHbins(int);
+    void setSbins(int);
+    void setVbins(int);
+    void setAlpha(double);
+
+
     cv::Mat mask, mask_roi, hue_roi, roi_hist2;
 private:
+    void updateHist(cv::Mat roi);
     cv::Rect trackWindow;
     cv::Mat roi_hist, roi;
     cv::Mat hsv_frame, backproj, hue_sat;
     cv::Mat heatmap;
     double alpha = 0.5;
     int hsize = 16;
+    int hbins = 10, sbins = 10, vbins = 10;
     float hranges[2] = {0,180};
     Scalar lowThresh = Scalar(0, 0, 0);
     Scalar highThresh = Scalar(180, 255, 255);

@@ -194,8 +194,21 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_bgs_params_clicked()
 {
-    params_ui = new ParamsForm();
-    params_ui->setBgSubtractor(bgSubtractor);
-    connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), params_ui, SLOT(updateFrames(cv::Mat)));
-    params_ui->show();
+    bg_params_ui = new ParamsForm();
+    bg_params_ui->setWindowTitle("Background subtraction params");
+    bg_params_ui->setBgSubtractor(bgSubtractor);
+    connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), bg_params_ui, SLOT(updateFrames(cv::Mat)));
+    bg_params_ui->show();
+}
+
+void MainWindow::on_ms_params_clicked()
+{
+    ms_params_ui = new MsParamsForm();
+    ms_params_ui->setWindowTitle("Meanshift params");
+    ms_params_ui->setMsTracker(&msTracker);
+    ms_params_ui->setBgSubtractor(&bgSubtractor
+       );
+    connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), ms_params_ui, SLOT(updateFrames()));
+    ms_params_ui->show();
+
 }
