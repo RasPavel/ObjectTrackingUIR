@@ -25,8 +25,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), this, SLOT(processFrame(cv::Mat)));
 
 
+
     ui->setupUi(this);
     connect(ui->label_input, SIGNAL(selected(QRect)), this, SLOT(initMeanshiftTracker(QRect)));
+    connect(ui->label_input, SIGNAL(selected(QRect)), this, SLOT(initPFTracker(QRect)));
 }
 
 
@@ -88,42 +90,26 @@ void MainWindow::processFrame(Mat frame)
         QImage topright_img = QImage((uchar*) topright_mat.data, topright_mat.cols, topright_mat.rows, topright_mat.step, QImage::Format_RGB888);
         QPixmap topright_pix = QPixmap::fromImage(topright_img);
         ui->label_topright->setPixmap(topright_pix.scaled(ui->label_topright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+
+
+        pfTracker->processFrame(frame);
+        cv::Mat pf_mat = myPlayer->getCurrentFrame().clone();
+        std::vector<Particle> particle_set = pfTracker->particle_set;
+        for(std::vector<Particle>::const_iterator i = particle_set.begin(); i != particle_set.end(); ++i) {
+            Particle p = *i;
+            circle(pf_mat, p.pos, 3, color_red, -1);
+        }
+
+        QImage pf_img = QImage((uchar*) pf_mat.data, pf_mat.cols, pf_mat.rows, pf_mat.step, QImage::Format_RGB888);
+        QPixmap pf_pix = QPixmap::fromImage(pf_img);
+        ui->label_down->setPixmap(pf_pix.scaled(ui->label_down->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+
     }
 
-//    cv::Point final_position = msTracker->getPosition();
-//    circle(track, final_position, 1, color_red);
-
-
-
-
-
-    QImage bg_img = QImage((uchar*) morph_close.data, morph_close.cols, morph_close.rows, morph_close.step, QImage::Format_Grayscale8);
-    QPixmap bg_pix = QPixmap::fromImage(bg_img);
-
-    QImage open_img = QImage((uchar*) morph_open.data, morph_open.cols, morph_open.rows, morph_open.step, QImage::Format_Grayscale8);
-    QPixmap open_pix = QPixmap::fromImage(open_img);
-
-    QImage close_img = QImage((uchar*) morph_close.data, morph_close.cols, morph_close.rows, morph_close.step, QImage::Format_Grayscale8);
-    QPixmap close_pix = QPixmap::fromImage(close_img);
-
-//    int N = bgSubtractor->getMixtureCount();
-//    qDebug() << N << "mixtures";
-
-
-    Mat dst = Mat::zeros(frame.size(), CV_8UC3);
-
-
-
-    cv::Rect boundRect = bgSubtractor->getBoundingRect();
-    cv::Point position = bgSubtractor->getPosition();
-    rectangle( dst, boundRect.tl(), boundRect.br(), color_blue, 2, 8, 0 );
-
-    ellipse(dst, position, cv::Size(3,3), 0, 0, 360, color_red, 8);
-
-    QImage morph_img = QImage((uchar*) morph_mask.data, morph_mask.cols, morph_mask.rows, morph_mask.step, QImage::Format_Grayscale8);
-    QPixmap morph_pix = QPixmap::fromImage(morph_img);
-    QImage contour_img = QImage((uchar*) dst.data, dst.cols, dst.rows, dst.step, QImage::Format_RGB888);
-    QPixmap contour_pix = QPixmap::fromImage(contour_img);
+//    QImage morph_img = QImage((uchar*) morph_mask.data, morph_mask.cols, morph_mask.rows, morph_mask.step, QImage::Format_Grayscale8);
+//    QPixmap morph_pix = QPixmap::fromImage(morph_img);
+//    QImage contour_img = QImage((uchar*) dst.data, dst.cols, dst.rows, dst.step, QImage::Format_RGB888);
+//    QPixmap contour_pix = QPixmap::fromImage(contour_img);
 
 //    ui->label_bottomright->setPixmap(contour_pix.scaled(ui->label_bottomright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
 }
@@ -142,6 +128,20 @@ void MainWindow::initMeanshiftTracker(QRect rect)
 
     cv::Rect targetRect(rect.x() * xScale, rect.y() * yScale, rect.width() * xScale, rect.height() * yScale);
     msTracker = new MeanShiftTracker(curFrame, targetRect);
+}
+
+void MainWindow::initPFTracker(QRect rect)
+{
+    qDebug() << "INIT PFTracker";
+    cv::Mat curFrame = myPlayer->getCurrentFrame();
+
+    float xScale = (float) curFrame.cols / ui->label_input->width();
+    float yScale = (float) curFrame.rows / ui->label_input->height();
+
+    cv::Rect targetRect(rect.x() * xScale, rect.y() * yScale, rect.width() * xScale, rect.height() * yScale);
+    pfTracker = new ParticleFilterTracker();
+    pfTracker->init(curFrame, targetRect);
+
 }
 
 void MainWindow::updatePlayerUI(QImage img)

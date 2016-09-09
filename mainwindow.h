@@ -7,6 +7,7 @@
 #include "msparamsform.h"
 #include "bgsubtractor.h"
 #include "meanshifttracker.h"
+#include "particlefiltertracker.h"
 
 namespace Ui {
 class MainWindow;
@@ -24,6 +25,7 @@ private slots:
     void processFrame(cv::Mat frame);
     void updatePlayerUI(QImage img);
     void initMeanshiftTracker(QRect rect);
+    void initPFTracker(QRect rect);
     void on_load_button_clicked();
     void on_play_button_clicked();
 
@@ -39,6 +41,7 @@ private:
     Player* myPlayer;
     BgSubtractor* bgSubtractor;
     MeanShiftTracker* msTracker;
+    ParticleFilterTracker* pfTracker;
 
     bool initialized;
 
