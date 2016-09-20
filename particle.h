@@ -13,8 +13,9 @@ class Particle
 {
 public:
     Particle();
-    Particle(double, cv::Point);
-    cv::Point pos;
+    Particle(double w, int x, int y);
+    int x;
+    int y;
     double weight;
 };
 

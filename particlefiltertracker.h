@@ -28,12 +28,20 @@ public:
     cv::Vec3i template_haar[HAAR_COUNT];
     cv::Mat template_img;
     cv::Mat current_frame;
+    cv::Mat template_hist;
     cv::Point current_pos;
     cv::Rect current_rect;
     int N = 100;
     double sigmax = 4;
     double sigmay = 4;
-    double lambda = 10;
+    double lambda = 100;
+    float hranges[2] = { 0, 180 };
+    float sranges[2] = { 0, 256 };
+    float vranges[2] = { 0, 256 };
+    Scalar lowThresh = Scalar(0, 0, 0);
+    Scalar highThresh = Scalar(180, 255, 255);
+    int channels[3] = {0, 1, 2};
+    int hbins = 10, sbins = 10, vbins = 10;
 
     ParticleFilterTracker();
     void init(cv::Mat frame, cv::Rect roi);
@@ -52,12 +60,17 @@ public:
     cv::Rect getBoundingRect();
 
 private:
+    cv::Mat particle_roi_mask;
+    cv::Mat particle_roi_hsv;
+    cv::Mat particle_roi_hist;
+
+
     void printVec3i(cv::Vec3i v);
     void printParticleSet() {
         double sum = 0;
 
         for (auto & pa : particle_set) {
-            qDebug() << "Particle" << pa.pos.x << pa.pos.y << "w" << pa.weight;
+            qDebug() << "Particle" << pa.x << pa.y << "w" << pa.weight;
             sum += pa.weight;
         }
         qDebug() << "weights sum" << sum;

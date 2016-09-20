@@ -2,7 +2,7 @@
 
 ParticleFilterTracker::ParticleFilterTracker()
 {
-    Particle p1(0.8, cv::Point(100,100));
+    Particle p1(0.8, 100, 100);
 
 
 
@@ -16,7 +16,22 @@ void ParticleFilterTracker::init(cv::Mat frame, cv::Rect roi) {
     for (int i = 0; i < HAAR_COUNT; i++) {
         template_haar[i] = haarVec(template_img, i);
     }
-    printVec3i(template_haar[0]);
+//    printVec3i(template_haar[0]);
+
+
+    int histSize[] = {hbins, sbins, vbins};
+
+    const float* ranges[] = { hranges, sranges, vranges};
+
+
+    cv::Mat mask_roi;
+    cv::Mat hsv_roi;
+    cv::cvtColor(template_img, hsv_roi, CV_RGB2HSV);
+    inRange(hsv_roi, lowThresh, highThresh, mask_roi);
+    calcHist( &hsv_roi, 1, channels, mask_roi, template_hist, 3, histSize, ranges, true);
+
+
+
 
     particle_set.clear();
     srand(time(0));
@@ -27,7 +42,7 @@ void ParticleFilterTracker::init(cv::Mat frame, cv::Rect roi) {
         double ymin = roi.tl().y;
         double ymax = roi.br().y;
         double y = (ymax - ymin) * ( (double)rand() / (double)RAND_MAX ) + ymin;
-        particle_set.push_back(Particle(1.0 / N, cv::Point(x, y)));
+        particle_set.push_back(Particle(1.0 / N, x, y));
     }
 
 }
@@ -36,13 +51,13 @@ void ParticleFilterTracker::processFrame(const cv::Mat& frame) {
     current_frame = frame.clone();
     resample();
     qDebug() << "before";
-    printParticleSet();
+//    printParticleSet();
     transition();
-    printParticleSet();
+//    printParticleSet();
     reweight();
-    printParticleSet();
+//    printParticleSet();
     estimateState();
-    printParticleSet();
+//    printParticleSet();
 }
 
 void ParticleFilterTracker::resample() {
@@ -66,7 +81,7 @@ void ParticleFilterTracker::resample() {
         double cum = cumulative.upper_bound(r)->first;
         Particle p = cumulative[cum];
         qDebug() << p.weight;
-        new_particle_set.push_back(Particle(p.weight, cv::Point(p.pos.x, p.pos.y)));
+        new_particle_set.push_back(Particle(p.weight, p.x, p.y));
     }
     particle_set.clear();
     particle_set.shrink_to_fit();
@@ -91,16 +106,15 @@ void ParticleFilterTracker::reweight() {
 }
 
 double ParticleFilterTracker::likelihood(Particle p) {
-    int x = p.pos.x;
-    int y = p.pos.y;
     int w = current_rect.width;
     int h = current_rect.height;
-    cv::Rect region_rect(x - w/2, y - h/2, w, h);
-    cv::Mat region = current_frame(region_rect);
+
+    cv::Rect roi_rect = cv::Rect(p.x - w/2, p.y - h/2, w, h) & cv::Rect(0, 0, current_frame.rows, current_frame.cols);
+    cv::Mat particle_roi = current_frame(roi_rect);
 
     cv::Vec3i particle_haar[HAAR_COUNT];
     for (int i = 0; i < HAAR_COUNT; i++) {
-        particle_haar[i] = haarVec(region, i);
+        particle_haar[i] = haarVec(particle_roi, i);
     }
 
     int sum = 0;
@@ -114,15 +128,25 @@ double ParticleFilterTracker::likelihood(Particle p) {
     double haar_score = sqrt(sum);
 
 
-    qDebug() << "template haar 4";
-    printVec3i(template_haar[0]);
-    printVec3i(particle_haar[0]);
+//    printVec3i(template_haar[0]);
+//    printVec3i(particle_haar[0]);
+
     qDebug() << "haar score" << haar_score;
-//    qDebug() << haar_particle[0] << haar_particle[1] << haar_particle[2];
-//    qDebug() << template_haar[0] << template_haar[1] << template_haar[2];
+
+    cv::cvtColor(particle_roi, particle_roi_hsv, CV_RGB2HSV);
+    inRange(particle_roi_hsv, lowThresh, highThresh, particle_roi_mask);
+    int histSize[] = {hbins, sbins, vbins};
+    const float* ranges[] = { hranges, sranges, vranges};
+    calcHist( &particle_roi_hsv, 1, channels, particle_roi_mask, particle_roi_hist, 3, histSize, ranges, true);
+
+    double hist_score = cv::compareHist(template_hist, particle_roi_hist, CV_COMP_CORREL);
+    qDebug() << "hist_score" << hist_score;
+
+
 
     double likelihood = exp(- haar_score*haar_score / lambda / lambda);
-    return likelihood;
+
+    return hist_score;
 
 }
 
@@ -132,8 +156,8 @@ void ParticleFilterTracker::estimateState() {
     double sumy = 0;
     for(std::vector<Particle>::const_iterator i = particle_set.begin(); i != particle_set.end(); ++i) {
         Particle p = *i;
-        sumx += p.pos.x * p.weight;
-        sumy += p.pos.y * p.weight;
+        sumx += p.x * p.weight;
+        sumy += p.y * p.weight;
     }
     int meanx = sumx / N;
     int meany = sumy / N;
@@ -148,11 +172,11 @@ void ParticleFilterTracker::transition() {
     qDebug() << "transition called";
 
     for(std::vector<Particle>::iterator i = particle_set.begin(); i != particle_set.end(); ++i) {
-        qDebug() << "before point" << (*i).pos.x;
-        int newx = (*i).pos.x + (int) rng.gaussian(sigmax);
-        int newy = (*i).pos.y + (int) rng.gaussian(sigmay);
-        (*i).pos = cv::Point(newx, newy);
-        qDebug() << "after point" << (*i).pos.x;
+        qDebug() << "before point" << (*i).x;
+        (*i).x = (*i).x + (int) rng.gaussian(sigmax);
+        (*i).y = (*i).y + (int) rng.gaussian(sigmay);
+
+        qDebug() << "after point" << (*i).x;
     }
 }
 
@@ -160,14 +184,7 @@ cv::Vec3i ParticleFilterTracker::haarVec(cv::Mat frame, int type) {
     cv::Mat integral_img;
     integral(frame, integral_img);
 
-//    qDebug() << frame.rows << "x" <<frame.cols << frame.channels();
-
     cv::Mat mask = cv::Mat::ones(frame.rows, frame.cols, CV_8UC1);
-
-//    cv::Mat topleft = mask(cv::Rect(0, 0, mask.rows/2, mask.cols / 2));
-//    cv::Mat botleft = mask(cv::Rect(0, mask.cols/2, mask.rows/2, mask.cols / 2));
-//    cv::Mat topright = mask(cv::Rect(mask.cols/2, 0, mask.rows/2, mask.cols / 2));
-//    cv::Mat botright = mask(cv::Rect(mask.rows/2, mask.cols/2, mask.rows/2, mask.cols / 2));
 
     cv::Vec3i haar;
     int w = integral_img.rows;
@@ -185,10 +202,6 @@ cv::Vec3i ParticleFilterTracker::haarVec(cv::Mat frame, int type) {
     cv::Vec3i topright = (integral_img.at<cv::Vec3i>(w-1, h/2) - integral_img.at<cv::Vec3i>(w/2, h/2)) / (w/2 * h/2);
     cv::Vec3i botright = (integral_img.at<cv::Vec3i>(w-1, h-1) + integral_img.at<cv::Vec3i>(w/2, h/2)
                           - integral_img.at<cv::Vec3i>(w-1, h/2) - integral_img.at<cv::Vec3i>(w/2, h-1)) / (w/2 * h/2);
-//    printVec3i(topleft);
-//    printVec3i(botleft);
-//    printVec3i(topright);
-//    printVec3i(botright);
 
     switch(type) {
     case 0:
@@ -204,9 +217,6 @@ cv::Vec3i ParticleFilterTracker::haarVec(cv::Mat frame, int type) {
         haar = topright + botleft - topleft - botright;
         break;
     }
-
-//    qDebug() << "Haar returns" ;
-//    printVec3i(haar);
 
     return haar;
 }

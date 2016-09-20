@@ -4,8 +4,9 @@ Particle::Particle() {
 
 }
 
-Particle::Particle(double w, cv::Point position)
+Particle::Particle(double w, int x, int y)
 {
    weight = w;
-   pos = position;
+   this->x = x;
+   this->y = y;
 }

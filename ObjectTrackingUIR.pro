@@ -20,20 +20,24 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     player.cpp \
     bgsubtractor.cpp \
-    meanshifttracker.cpp \
     clickablelabel.cpp \
     objecttracker.cpp \
     paramsform.cpp \
-    msparamsform.cpp
+    msparamsform.cpp \
+    particlefiltertracker.cpp \
+    particle.cpp \
+    camshifttracker.cpp
 
 HEADERS  += mainwindow.h \
     player.h \
-    meanshifttracker.h \
     clickablelabel.h \
     objecttracker.h \
     bgsubtractor.h \
     paramsform.h \
-    msparamsform.h
+    msparamsform.h \
+    particlefiltertracker.h \
+    particle.h \
+    camshifttracker.h
 
 FORMS    += mainwindow.ui \
     paramsform.ui \
