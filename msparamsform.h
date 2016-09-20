@@ -2,7 +2,7 @@
 #define MSPARAMSFORM_H
 
 #include <QWidget>
-#include "meanshifttracker.h"
+#include "camshifttracker.h"
 #include "bgsubtractor.h"
 
 namespace Ui {
@@ -15,7 +15,7 @@ class MsParamsForm : public QWidget
 
 public:
     explicit MsParamsForm(QWidget *parent = 0);
-    void setMsTracker(MeanShiftTracker**);
+    void setCsTracker(CamShiftTracker**);
     void setBgSubtractor(BgSubtractor**);
     ~MsParamsForm();
 
@@ -28,9 +28,11 @@ private slots:
     void on_vbins_spinbox_valueChanged(int);
     void on_alpha_slider_sliderMoved(int position);
 
+    void on_thresh_spinbox_valueChanged(int arg1);
+
 private:
     Ui::MsParamsForm *ui;
-    MeanShiftTracker** msTracker;
+    CamShiftTracker** csTracker;
     BgSubtractor** bgSubtractor;
 };
 

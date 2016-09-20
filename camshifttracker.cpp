@@ -1,6 +1,6 @@
-#include "meanshifttracker.h"
+#include "camshifttracker.h"
 
-MeanShiftTracker::MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect)
+CamShiftTracker::CamShiftTracker(cv::Mat frame, cv::Rect roi_rect)
 {
     cv::Mat hsv_roi;
     roi = cv::Mat(frame, roi_rect).clone();
@@ -13,12 +13,6 @@ MeanShiftTracker::MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect)
     float vranges[] = { 0, 256 };
     const float* ranges[] = { hranges, sranges, vranges};
     int channels[] = {0, 1, 2};
-
-//    int channels[] = {0, 0};
-//    hue_roi.create(hsv_roi.size(), hsv_roi.depth());
-//    mixChannels(&hsv_roi, 1, &hue_roi, 1, channels, 1);
-//    const float* phranges = hranges;
-//    calcHist(&hue_roi, 1, 0, mask_roi, roi_hist, 1, &hsize, &phranges);
 
     inRange(hsv_roi, lowThresh, highThresh, mask_roi);
     calcHist( &hsv_roi, 1, channels, mask_roi, roi_hist, 3, histSize, ranges, true);
@@ -42,7 +36,7 @@ MeanShiftTracker::MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect)
     trackWindow = roi_rect;
 }
 
-void MeanShiftTracker::processFrame(const cv::Mat& frame)
+void CamShiftTracker::processFrame(const cv::Mat& frame)
 {
     cv::cvtColor(frame, hsv_frame, CV_RGB2HSV);
     inRange(hsv_frame, lowThresh, highThresh, mask);
@@ -61,27 +55,26 @@ void MeanShiftTracker::processFrame(const cv::Mat& frame)
 
     int channels[] = {0,1,2};
     calcBackProject(&hue_sat, 1, channels, roi_hist, backproj, ranges);
-
-    //    calcBackProject(&hue_sat, 1, channels, roi_hist2, backproj2, ranges);
 //    backproj &= mask;
 
 
 
-    meanShift(backproj, trackWindow, termCrit);
-//    RotatedRect trackBox = CamShift(backproj, trackWindow, termCrit);
+
+//    MeanShift(backproj, trackWindow, termCrit);
+    rotatedBox = CamShift(backproj, trackWindow, termCrit);
 
 
-//    if( trackWindow.area() <= 1 )
+//    if( rotatedBox.area() <= 1 )
 //    {
 //        int cols = backproj.cols, rows = backproj.rows, r = (MIN(cols, rows) + 5)/6;
-//        trackWindow = Rect(trackWindow.x - r, trackWindow.y - r,
-//                          trackWindow.x + r, trackWindow.y + r) &
+//        rotatedBox = Rect(rotatedBox.x - r, rotatedBox.y - r,
+//                          rotatedBox.x + r, rotatedBox.y + r) &
 //                      Rect(0, 0, cols, rows);
 //   }
 
 }
 
-void MeanShiftTracker::processFrame(const cv::Mat& frame, cv::Mat bg_mask)
+void CamShiftTracker::processFrame(const cv::Mat& frame, cv::Mat bg_mask)
 {
     cv::cvtColor(frame, hsv_frame, CV_RGB2HSV);
     inRange(hsv_frame, lowThresh, highThresh, mask);
@@ -99,30 +92,30 @@ void MeanShiftTracker::processFrame(const cv::Mat& frame, cv::Mat bg_mask)
 
     int channels[] = {0,1,2};
     calcBackProject(&hsv_frame, 1, channels, roi_hist, backproj, ranges);
-    double beta = 1.0 - alpha;
 //    qDebug() << backproj << bg_mask.size() << backproj.depth() << bg_mask.depth();
-    addWeighted(backproj, alpha, bg_mask, beta, 0.5, heatmap);
+    addWeighted(backproj, alpha, bg_mask, 1.0 - alpha, 0, heatmap);
+    threshold(heatmap, heatmap, thresh, 0, cv::THRESH_TOZERO);
 
     //    calcBackProject(&hue_sat, 1, channels, roi_hist2, backproj2, ranges);
 //    backproj &= mask;
 
 
 
-    meanShift(heatmap, trackWindow, termCrit);
-//    RotatedRect trackBox = CamShift(backproj, trackWindow, termCrit);
+//    MeanShift(heatmap, trackWindow, termCrit);
+    rotatedBox = CamShift(heatmap, trackWindow, termCrit);
 
 
-//    if( trackWindow.area() <= 1 )
+//    if( rotatedBox.area() <= 1 )
 //    {
 //        int cols = backproj.cols, rows = backproj.rows, r = (MIN(cols, rows) + 5)/6;
-//        trackWindow = Rect(trackWindow.x - r, trackWindow.y - r,
-//                          trackWindow.x + r, trackWindow.y + r) &
+//        rotatedBox = Rect(rotatedBox.x - r, rotatedBox.y - r,
+//                          rotatedBox.x + r, rotatedBox.y + r) &
 //                      Rect(0, 0, cols, rows);
 //   }
 
 }
 
-void MeanShiftTracker::updateHist(cv::Mat roi)
+void CamShiftTracker::updateHist(cv::Mat roi)
 {
     cv::Mat hsv_roi;
     cv::cvtColor(roi, hsv_roi, CV_RGB2HSV);
@@ -139,48 +132,58 @@ void MeanShiftTracker::updateHist(cv::Mat roi)
     calcHist(&hsv_roi, 1, channels, mask_roi, roi_hist, 3, histSize, ranges, true);
 }
 
-void MeanShiftTracker::setHbins(int h) {
+void CamShiftTracker::setHbins(int h) {
     hbins = h;
     updateHist(roi);
 }
 
 
-void MeanShiftTracker::setSbins(int s) {
+void CamShiftTracker::setSbins(int s) {
     sbins = s;
     updateHist(roi);
 }
 
 
-void MeanShiftTracker::setVbins(int v) {
+void CamShiftTracker::setVbins(int v) {
     vbins = v;
     updateHist(roi);
 }
 
-void MeanShiftTracker::setAlpha(double a) {
+void CamShiftTracker::setAlpha(double a) {
     alpha = a;
 }
 
-cv::Mat MeanShiftTracker::getHeatmap()
+void CamShiftTracker::setThreshold(int t) {
+    thresh = t;
+}
+
+cv::Mat CamShiftTracker::getHeatmap()
 {
     return heatmap;
 }
 
-cv::Rect MeanShiftTracker::getBoundingRect()
+cv::Rect CamShiftTracker::getBoundingRect()
 {
+//    return rotatedBox.boundingRect();
     return trackWindow;
 }
 
-cv::Mat MeanShiftTracker::getBackProjection()
+cv::RotatedRect CamShiftTracker::getRotatedRect()
+{
+    return rotatedBox;
+}
+
+cv::Mat CamShiftTracker::getBackProjection()
 {
     return backproj;
 }
 
-cv::Mat MeanShiftTracker::getRoi()
+cv::Mat CamShiftTracker::getRoi()
 {
     return roi;
 }
 
-cv::Point MeanShiftTracker::getPosition()
+cv::Point CamShiftTracker::getPosition()
 {
     cv::Rect boundRect = getBoundingRect();
     return boundRect.br()/2 + boundRect.tl()/2;

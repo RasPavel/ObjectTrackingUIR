@@ -6,8 +6,10 @@
 #include "paramsform.h"
 #include "msparamsform.h"
 #include "bgsubtractor.h"
-#include "meanshifttracker.h"
+#include "camshifttracker.h"
 #include "particlefiltertracker.h"
+
+#include <QElapsedTimer>
 
 namespace Ui {
 class MainWindow;
@@ -24,7 +26,7 @@ public:
 private slots:
     void processFrame(cv::Mat frame);
     void updatePlayerUI(QImage img);
-    void initMeanshiftTracker(QRect rect);
+    void initCamshiftTracker(QRect rect);
     void initPFTracker(QRect rect);
     void on_load_button_clicked();
     void on_play_button_clicked();
@@ -37,10 +39,10 @@ private:
     Ui::MainWindow *ui;
 
     ParamsForm *bg_params_ui;
-    MsParamsForm *ms_params_ui;
+    MsParamsForm *cs_params_ui;
     Player* myPlayer;
     BgSubtractor* bgSubtractor;
-    MeanShiftTracker* msTracker;
+    CamShiftTracker* csTracker;
     ParticleFilterTracker* pfTracker;
 
     bool initialized;
@@ -49,6 +51,8 @@ private:
     cv::Mat mask;
     cv::Mat backproj;
     cv::Mat track;
+
+    QElapsedTimer timer;
 };
 
 #endif // MAINWINDOW_H

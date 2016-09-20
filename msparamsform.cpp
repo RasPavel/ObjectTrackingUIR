@@ -10,11 +10,11 @@ MsParamsForm::MsParamsForm(QWidget *parent) :
 
 void MsParamsForm::updateFrames()
 {
-    if (!*msTracker) {
+    if (!*csTracker) {
         return;
     }
-    Mat backproj = (*msTracker)->getBackProjection();
-    Mat heatmap = (*msTracker)->getHeatmap();
+    Mat backproj = (*csTracker)->getBackProjection();
+    Mat heatmap = (*csTracker)->getHeatmap();
     Mat bgmask = *((*bgSubtractor)->getMask());
 
     QImage backproj_img = QImage((uchar*) backproj.data, backproj.cols, backproj.rows, backproj.step, QImage::Format_Grayscale8);
@@ -38,9 +38,9 @@ MsParamsForm::~MsParamsForm()
     delete ui;
 }
 
-void MsParamsForm::setMsTracker(MeanShiftTracker** mt)
+void MsParamsForm::setCsTracker(CamShiftTracker** mt)
 {
-    msTracker = mt;
+    csTracker = mt;
 }
 
 void MsParamsForm::setBgSubtractor(BgSubtractor** bgs)
@@ -50,20 +50,25 @@ void MsParamsForm::setBgSubtractor(BgSubtractor** bgs)
 
 void MsParamsForm::on_hbins_spinbox_valueChanged(int h)
 {
-    (*msTracker)->setHbins(h);
+    (*csTracker)->setHbins(h);
 }
 
 void MsParamsForm::on_sbins_spinbox_valueChanged(int s)
 {
-    (*msTracker)->setSbins(s);
+    (*csTracker)->setSbins(s);
 }
 
 void MsParamsForm::on_vbins_spinbox_valueChanged(int v)
 {
-    (*msTracker)->setVbins(v);
+    (*csTracker)->setVbins(v);
 }
 
 void MsParamsForm::on_alpha_slider_sliderMoved(int position)
 {
-    (*msTracker)->setAlpha((double) position / 100.0);
+    (*csTracker)->setAlpha((double) position / 100.0);
+}
+
+void MsParamsForm::on_thresh_spinbox_valueChanged(int thresh)
+{
+    (*csTracker)->setThreshold(thresh);
 }

@@ -4,7 +4,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <vector>
-#include <QTime>
+
 using namespace std;
 
 Q_DECLARE_METATYPE(cv::Mat)
@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     myPlayer = new Player();
     bgSubtractor = new BgSubtractor();
-    msTracker = NULL;
+    csTracker = NULL;
     initialized = false;
 
 
@@ -27,19 +27,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     ui->setupUi(this);
-    connect(ui->label_input, SIGNAL(selected(QRect)), this, SLOT(initMeanshiftTracker(QRect)));
+    connect(ui->label_input, SIGNAL(selected(QRect)), this, SLOT(initCamshiftTracker(QRect)));
     connect(ui->label_input, SIGNAL(selected(QRect)), this, SLOT(initPFTracker(QRect)));
 }
 
 
 void MainWindow::processFrame(Mat frame)
 {
-    QTime time = QTime::currentTime();
-
-    qDebug() << time.msec();
+    qDebug() << "elapsed time" << timer.restart();
     Scalar color_blue( 0, 0, 255 );
     Scalar color_red(255, 0 , 0);
-    Scalar color_yellow(0, 255, 255);
+    Scalar color_yellow(255, 255, 0);
     bgSubtractor->processFrame(frame);
 
     if (!initialized) {
@@ -55,54 +53,57 @@ void MainWindow::processFrame(Mat frame)
     mask = *bgSubtractor->getMask();
 
     usingAlgCombination = true;
-    if (msTracker) {
+    if (csTracker) {
 
 
         if (usingAlgCombination) {
-            msTracker->processFrame(frame, mask);
+            csTracker->processFrame(frame, mask);
         } else {
-            msTracker->processFrame(frame);
+            csTracker->processFrame(frame);
         }
 
-        cv::Mat roi = msTracker->getRoi();
-        cv::Mat ms_mask_roi = msTracker->mask_roi;
-        cv::Mat backproj = msTracker->getBackProjection();
-        cv::Mat heatmap = msTracker->getHeatmap();
+        cv::Mat roi = csTracker->getRoi();
+        cv::Mat cs_mask_roi = csTracker->mask_roi;
+        cv::Mat backproj = csTracker->getBackProjection();
+        cv::Mat heatmap = csTracker->getHeatmap();
 
 
+
+        cv::Mat topright_mat = heatmap.clone();
 
         //draw track
-        circle(track, msTracker->getPosition(), 1, color_yellow);
+        circle(track, csTracker->getPosition(), 1, color_yellow);
 
-        cv::Rect msBoundRect = msTracker->getBoundingRect();
-        cvtColor( backproj, backproj, COLOR_GRAY2RGB);
-        rectangle(backproj, msBoundRect, color_blue);
+        cv::Rect csBoundRect = csTracker->getBoundingRect();
+        cv::RotatedRect rotatedRect = csTracker->getRotatedRect();
 
-        cv::Mat topright_mat = backproj;
-
-        cv::Mat bottomleft_mat = morph_close;
-        cv::Mat bottomright_mat = heatmap;
+        cvtColor( topright_mat, topright_mat, COLOR_GRAY2RGB);
 
         if (ui->track_checkbox->isChecked()) {
-            addWeighted(backproj, 0.5, track, 0.5, 0, topright_mat);
+            addWeighted(frame, 0.5, track, 0.5, 0, topright_mat);
         }
+        rectangle(topright_mat, csBoundRect, color_blue, 2);
+        ellipse(topright_mat, rotatedRect, color_red, 2, cv::LINE_AA);
 
         QImage topright_img = QImage((uchar*) topright_mat.data, topright_mat.cols, topright_mat.rows, topright_mat.step, QImage::Format_RGB888);
         QPixmap topright_pix = QPixmap::fromImage(topright_img);
         ui->label_topright->setPixmap(topright_pix.scaled(ui->label_topright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
 
 
-        pfTracker->processFrame(frame);
-        cv::Mat pf_mat = myPlayer->getCurrentFrame().clone();
-        std::vector<Particle> particle_set = pfTracker->particle_set;
-        for(std::vector<Particle>::const_iterator i = particle_set.begin(); i != particle_set.end(); ++i) {
-            Particle p = *i;
-            circle(pf_mat, p.pos, 3, color_red, -1);
-        }
+        bool pf_tracker_enabled = true;
+        if (pf_tracker_enabled) {
+            pfTracker->processFrame(frame);
+            cv::Mat pf_mat = myPlayer->getCurrentFrame().clone();
+            std::vector<Particle> particle_set = pfTracker->particle_set;
+            for(std::vector<Particle>::const_iterator i = particle_set.begin(); i != particle_set.end(); ++i) {
+                Particle p = *i;
+                circle(pf_mat, cv::Point(p.x, p.y), 1, color_red, -1);
+            }
 
-        QImage pf_img = QImage((uchar*) pf_mat.data, pf_mat.cols, pf_mat.rows, pf_mat.step, QImage::Format_RGB888);
-        QPixmap pf_pix = QPixmap::fromImage(pf_img);
-        ui->label_down->setPixmap(pf_pix.scaled(ui->label_down->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+            QImage pf_img = QImage((uchar*) pf_mat.data, pf_mat.cols, pf_mat.rows, pf_mat.step, QImage::Format_RGB888);
+            QPixmap pf_pix = QPixmap::fromImage(pf_img);
+            ui->label_down->setPixmap(pf_pix.scaled(ui->label_down->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
+        }
 
     }
 
@@ -114,9 +115,9 @@ void MainWindow::processFrame(Mat frame)
 //    ui->label_bottomright->setPixmap(contour_pix.scaled(ui->label_bottomright->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
 }
 
-void MainWindow::initMeanshiftTracker(QRect rect)
+void MainWindow::initCamshiftTracker(QRect rect)
 {
-    qDebug() << "INIT MSTracker";
+    qDebug() << "INIT CSTracker";
     cv::Mat curFrame = myPlayer->getCurrentFrame();
 
     float xScale = (float) curFrame.cols / ui->label_input->width();
@@ -127,7 +128,7 @@ void MainWindow::initMeanshiftTracker(QRect rect)
     qDebug() << xScale << yScale;
 
     cv::Rect targetRect(rect.x() * xScale, rect.y() * yScale, rect.width() * xScale, rect.height() * yScale);
-    msTracker = new MeanShiftTracker(curFrame, targetRect);
+    csTracker = new CamShiftTracker(curFrame, targetRect);
 }
 
 void MainWindow::initPFTracker(QRect rect)
@@ -203,12 +204,12 @@ void MainWindow::on_bgs_params_clicked()
 
 void MainWindow::on_ms_params_clicked()
 {
-    ms_params_ui = new MsParamsForm();
-    ms_params_ui->setWindowTitle("Meanshift params");
-    ms_params_ui->setMsTracker(&msTracker);
-    ms_params_ui->setBgSubtractor(&bgSubtractor
+    cs_params_ui = new MsParamsForm();
+    cs_params_ui->setWindowTitle("Camshift params");
+    cs_params_ui->setCsTracker(&csTracker);
+    cs_params_ui->setBgSubtractor(&bgSubtractor
        );
-    connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), ms_params_ui, SLOT(updateFrames()));
-    ms_params_ui->show();
+    connect(myPlayer, SIGNAL(processedFrame(cv::Mat)), cs_params_ui, SLOT(updateFrames()));
+    cs_params_ui->show();
 
 }

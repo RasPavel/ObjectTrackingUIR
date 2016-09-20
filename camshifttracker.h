@@ -1,5 +1,5 @@
-#ifndef MEANSHIFTTRACKER_H
-#define MEANSHIFTTRACKER_H
+#ifndef CAMSHIFTTRACKER_H
+#define CAMSHIFTTRACKER_H
 
 #include "objecttracker.h"
 
@@ -14,14 +14,15 @@
 
 using namespace cv;
 
-class MeanShiftTracker: public ObjectTracker
+class CamShiftTracker: public ObjectTracker
 {
 public:
-    MeanShiftTracker(cv::Mat frame, cv::Rect roi_rect);
+    CamShiftTracker(cv::Mat frame, cv::Rect roi_rect);
     void processFrame(const cv::Mat& frame);
     void processFrame(const cv::Mat& frame, cv::Mat bg_mask);
 
     cv::Rect getBoundingRect();
+    cv::RotatedRect getRotatedRect();
     cv::Mat getBackProjection();
 
 
@@ -33,12 +34,14 @@ public:
     void setSbins(int);
     void setVbins(int);
     void setAlpha(double);
+    void setThreshold(int);
 
 
     cv::Mat mask, mask_roi, hue_roi, roi_hist2;
 private:
     void updateHist(cv::Mat roi);
     cv::Rect trackWindow;
+    cv::RotatedRect rotatedBox;
     cv::Mat roi_hist, roi;
     cv::Mat hsv_frame, backproj, hue_sat;
     cv::Mat heatmap;
@@ -48,8 +51,9 @@ private:
     float hranges[2] = {0,180};
     Scalar lowThresh = Scalar(0, 0, 0);
     Scalar highThresh = Scalar(180, 255, 255);
+    int thresh = 100;
     TermCriteria termCrit;
 };
 
 
-#endif // MEANSHIFTTRACKER_H
+#endif // CAMSHIFTTRACKER_H
