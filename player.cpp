@@ -1,27 +1,47 @@
 #include "player.h"
 #include <QDebug>
 
-Player::Player(QObject *parent) : QThread(parent)
-{
-    stop = true;
-}
+Player::Player(QObject *parent) : QThread(parent), stopped(true)
+{}
 
 bool Player::loadVideo(std::string filename) {
+    if (capture.isOpened()) {
+        return false;
+    }
+
     capture.open(filename);
     if (capture.isOpened())
     {
         frameRate = (int) capture.get(CV_CAP_PROP_FPS);
+        qDebug() << "framerate" << frameRate;
         return true;
     }
     else
         return false;
 }
 
-void Player::Play()
+bool Player::useWebcam()
+{
+    if (capture.isOpened()) {
+        return false;
+    }
+
+    capture.open(0);
+    if (capture.isOpened())
+    {
+        frameRate = (int) capture.get(CV_CAP_PROP_FPS);
+        qDebug() << "framerate" << frameRate;
+        return true;
+    }
+    else
+        return false;
+}
+
+void Player::play()
 {
     if (!isRunning()) {
         if (isStopped()){
-            stop = false;
+            stopped = false;
         }
         start(LowPriority);
     }
@@ -30,10 +50,10 @@ void Player::Play()
 void Player::run()
 {
     int delay = (1000/frameRate);
-    while(!stop){
+    while(!stopped){
         if (!capture.read(frame))
         {
-            stop = true;
+            stopped = true;
             qDebug() << "read empty frame";
             break;
         }
@@ -59,27 +79,21 @@ void Player::run()
 Player::~Player()
 {
     mutex.lock();
-    stop = true;
+    stopped = true;
     capture.release();
     condition.wakeOne();
     mutex.unlock();
     wait();
 }
 
-void Player::Stop()
-{
-    stop = true;
-}
+void Player::stop() { stopped = true; }
+
+
+bool Player::isStopped() { return this->stopped; }
+
+cv::Mat Player::getCurrentFrame() { return RGBframe; }
 
 void Player::msleep(int ms){
     struct timespec ts = { ms / 1000, (ms % 1000) * 1000 * 1000 };
     nanosleep(&ts, NULL);
-}
-
-bool Player::isStopped() const{
-    return this->stop;
-}
-
-cv::Mat Player::getCurrentFrame() {
-    return RGBframe;
 }

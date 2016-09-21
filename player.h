@@ -10,18 +10,17 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <QString>
 
-using namespace cv;
 class Player : public QThread
 {   Q_OBJECT
 private:
-    bool stop;
     QMutex mutex;
     QWaitCondition condition;
-    Mat frame;
-    int frameRate;
-    VideoCapture capture;
-    Mat RGBframe;
+    cv::VideoCapture capture;
+    cv::Mat frame;
+    cv::Mat RGBframe;
     QImage img;
+    int frameRate;
+    bool stopped;
 protected:
     void run();
     void msleep(int ms);
@@ -29,10 +28,11 @@ public:
     Player(QObject *parent  = 0);
     ~Player();
     bool loadVideo(std::string filename);
-    void Play();
-    void Stop();
-    bool isStopped() const;
-    Mat getCurrentFrame();
+    bool useWebcam();
+    void play();
+    void stop();
+    bool isStopped();
+    cv::Mat getCurrentFrame();
 signals:
     void processedFrame(cv::Mat frame);
     void processedImage(const QImage &image);

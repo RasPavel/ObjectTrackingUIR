@@ -7,9 +7,6 @@ ParamsForm::ParamsForm(QWidget *parent) :
 {
     qRegisterMetaType< cv::Mat >("cv::Mat");
     ui->setupUi(this);
-
-
-
 }
 
 void ParamsForm::updateFrames(cv::Mat frame)

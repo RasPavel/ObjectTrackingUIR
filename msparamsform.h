@@ -18,22 +18,19 @@ public:
     void setCsTracker(CamShiftTracker**);
     void setBgSubtractor(BgSubtractor**);
     ~MsParamsForm();
-
+private:
+    Ui::MsParamsForm *ui;
+    CamShiftTracker **csTracker;
+    BgSubtractor **bgSubtractor;
 public slots:
     void updateFrames();
-
 private slots:
     void on_hbins_spinbox_valueChanged(int);
     void on_sbins_spinbox_valueChanged(int);
     void on_vbins_spinbox_valueChanged(int);
     void on_alpha_slider_sliderMoved(int position);
+    void on_thresh_spinbox_valueChanged(int);
 
-    void on_thresh_spinbox_valueChanged(int arg1);
-
-private:
-    Ui::MsParamsForm *ui;
-    CamShiftTracker** csTracker;
-    BgSubtractor** bgSubtractor;
 };
 
 #endif // MSPARAMSFORM_H

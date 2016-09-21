@@ -26,11 +26,9 @@ void MsParamsForm::updateFrames()
     QImage heatmap_img = QImage((uchar*) heatmap.data, heatmap.cols, heatmap.rows, heatmap.step, QImage::Format_Grayscale8);
     QPixmap heatmap_pix = QPixmap::fromImage(heatmap_img);
 
-
     ui->label_backproj->setPixmap(backproj_pix.scaled(ui->label_backproj->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
     ui->label_bgmask->setPixmap(bgmask_pix.scaled(ui->label_bgmask->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
     ui->label_heatmap->setPixmap(heatmap_pix.scaled(ui->label_heatmap->size(), Qt::IgnoreAspectRatio, Qt::FastTransformation));
-
 }
 
 MsParamsForm::~MsParamsForm()

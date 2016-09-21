@@ -25,7 +25,6 @@ public:
     cv::RotatedRect getRotatedRect();
     cv::Mat getBackProjection();
 
-
     cv::Point getPosition();
     cv::Mat getRoi();
     cv::Mat getHeatmap();
@@ -36,7 +35,6 @@ public:
     void setAlpha(double);
     void setThreshold(int);
 
-
     cv::Mat mask, mask_roi, hue_roi, roi_hist2;
 private:
     void updateHist(cv::Mat roi);
@@ -45,14 +43,22 @@ private:
     cv::Mat roi_hist, roi;
     cv::Mat hsv_frame, backproj, hue_sat;
     cv::Mat heatmap;
-    double alpha = 0.5;
+    double alpha = 0.3;
+    double sigma;
     int hsize = 16;
     int hbins = 10, sbins = 10, vbins = 10;
-    float hranges[2] = {0,180};
     Scalar lowThresh = Scalar(0, 0, 0);
     Scalar highThresh = Scalar(180, 255, 255);
     int thresh = 100;
     TermCriteria termCrit;
+
+    int mixCh[6] = {0, 0, 1, 1, 2, 2};
+    int channels[3] = {0, 1, 2};
+    float hranges[2] = { 0, 180 };
+    float sranges[2] = { 0, 256 };
+    float vranges[2] = { 0, 256 };
+    int histSize[3] = {hbins, sbins, vbins};
+    const float* ranges[3] = { hranges, sranges, vranges};
 };
 
 

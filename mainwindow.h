@@ -35,6 +35,10 @@ private slots:
     void on_bgs_params_clicked();
     void on_ms_params_clicked();
 
+    void on_webcam_button_clicked();
+
+    void on_pf_checkbox_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
 
@@ -46,8 +50,9 @@ private:
     ParticleFilterTracker* pfTracker;
 
     bool initialized;
-
     bool usingAlgCombination;
+    bool pf_tracker_enabled;
+
     cv::Mat mask;
     cv::Mat backproj;
     cv::Mat track;

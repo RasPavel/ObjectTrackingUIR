@@ -20,7 +20,6 @@ protected:
     void mouseMoveEvent(QMouseEvent* e);
     void mouseReleaseEvent(QMouseEvent* e);
     void mousePressEvent(QMouseEvent *e);
-
     void paintEvent(QPaintEvent *e);
 };
 
